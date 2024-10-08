@@ -1,0 +1,51 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+using System.Data;
+using System.Data.SqlClient;
+using System.Web.Configuration;
+
+namespace TrainingAppNew
+{
+    public partial class Menu : System.Web.UI.Page
+    {
+        protected void Page_Load(object sender, EventArgs e)
+        {
+            //Checks if the user is logged in. Otherwise redirects them to login page
+            if (Session["UserId"] == null)
+                Response.Redirect("Login.aspx");
+            else
+            {
+                lblLoggedInUser.Text = Session["UserName"].ToString() + " / " + Session["UserRole"].ToString();
+            }
+            if (Session["UserRole"].ToString().ToLower() == "employee")
+            {
+                Employees.Visible = false;
+            }
+        }
+
+        protected void Employees_Click(object sender, EventArgs e)
+        {
+            Response.Redirect("ListofEmployees.aspx");
+        }
+
+        protected void LogHours_Click(object sender, EventArgs e)
+        {
+            Response.Redirect("LogHours.aspx");
+        }
+
+        protected void WorkHoursReport_Click(object sender, EventArgs e)
+        {
+            Response.Redirect("workHoursReport.aspx");
+        }
+
+        protected void logOut_Click(object sender, EventArgs e)
+        {
+            Session.Clear();
+            Response.Redirect("Login.aspx");
+        }
+    }
+}
