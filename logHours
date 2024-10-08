@@ -1,0 +1,267 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+using System.Data;
+using System.Data.SqlClient;
+using System.Web.Configuration;
+using System.Configuration;
+using System.IO;
+
+namespace TrainingAppNew
+{
+    public partial class LogHours : System.Web.UI.Page
+    {
+        protected void Page_Load(object sender, EventArgs e)
+        {
+
+            //Checks if the user is logged in. Otherwise redirects them to login page
+            if (Session["UserId"] == null)
+                Response.Redirect("Login.aspx");
+           
+
+            //to allow data to be seen on webpage
+            if (!IsPostBack)
+            {
+
+                //for calendar
+                fromDateCalendar.Visible = false;
+                toDateCalendar.Visible = false;
+
+
+                //to display dates 
+                fromDate.Text = DateTime.Today.AddDays(-7).ToString("MM-dd-yyyy");
+                toDate.Text = DateTime.Now.ToString("MM-dd-yyyy");
+
+
+
+
+                //trying to connect employee dropDown with database start
+                string cs = ConfigurationManager.ConnectionStrings["dbconnection"].ConnectionString;
+                using (SqlConnection conn = new SqlConnection(cs))
+                {
+                    if (Session["UserRole"].ToString().ToLower() == "employee") //for loghours only employee
+                    { 
+                        SqlCommand cmd3 = new SqlCommand("Select ID,name from idus where id = " + Session["UserId"].ToString(), conn);
+                        SqlDataAdapter sda3 = new SqlDataAdapter(cmd3);
+                        DataTable dt3 = new DataTable();
+                        sda3.Fill(dt3);
+                        conn.Open();
+                        DropDownList2.DataSource = dt3;
+                        DropDownList2.DataTextField = "Name";
+                        DropDownList2.DataValueField = "ID";
+                        
+                        DropDownList2.DataBind();
+                        
+                        //end of connecting dropdown
+                    }
+                    else
+                    {
+                        SqlCommand cmd3 = new SqlCommand("Select ID,name from idus", conn);
+                        SqlDataAdapter sda3 = new SqlDataAdapter(cmd3);
+                        DataTable dt3 = new DataTable();
+                        sda3.Fill(dt3);
+                        conn.Open();
+                        DropDownList2.DataSource = dt3;
+                        DropDownList2.DataTextField = "Name";
+                        DropDownList2.DataValueField = "ID";
+                        ListItem li = new ListItem();
+                        li.Text = "--Select All--";
+                        li.Value = "0";
+
+                        DropDownList2.Items.Add(li);
+
+                        DropDownList2.DataBind();
+                        DropDownList2.Items.Insert(0, new ListItem("--select all--", "0"));
+                        //end of connecting dropdown
+                    }
+                }
+                BindDataGrid();
+
+            }
+        }
+        //calendar 
+        protected void ImageButton1_Click(object sender, EventArgs e)
+        {
+            if(fromDateCalendar.Visible)
+            {
+                fromDateCalendar.Visible = false;
+            }
+            else
+            {
+                fromDateCalendar.Visible=true;
+            }
+            fromDateCalendar.Attributes.Add("style","position:absolute");
+
+        }
+        protected void ImageButton2_Click(object sender, EventArgs e)
+        {
+            if (toDateCalendar.Visible)
+            {
+                toDateCalendar.Visible = false;
+            }
+            else
+            {
+                toDateCalendar.Visible = true;
+            }
+            toDateCalendar.Attributes.Add("style", "position:absolute");
+
+        }
+        //calendar
+        protected void fromDateCalendar_SelectionChanged(object sender, EventArgs e)
+        {
+            fromDate.Text = fromDateCalendar.SelectedDate.ToString("MM-dd-yyyy");
+            fromDateCalendar.Visible = false; //changed to true, was false before
+        }
+        protected void toDateCalendar_SelectionChanged(object sender, EventArgs e)
+        {
+            toDate.Text = toDateCalendar.SelectedDate.ToString("MM-dd-yyyy");
+            toDateCalendar.Visible = false; //changed to true, was false before
+        }
+
+        protected void fromDateCalendar_DayRender(object sender, DayRenderEventArgs e)
+        {
+            if (e.Day.IsOtherMonth)
+            {
+                e.Day.IsSelectable = false;
+                e.Cell.BackColor = System.Drawing.Color.Aquamarine;
+            }
+        }
+        protected void toDateCalendar_DayRender(object sender, DayRenderEventArgs e)
+        {
+            if (e.Day.IsOtherMonth)
+            {
+                e.Day.IsSelectable = false;
+                e.Cell.BackColor = System.Drawing.Color.Aquamarine;
+            }
+        }
+
+        protected void BackSecond_Click(object sender, EventArgs e)
+        {
+            Response.Redirect("Menu.aspx");
+        }
+
+        protected void Unnamed1_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        protected void BackButton_Click(object sender, EventArgs e)
+        {
+            Response.Redirect("Menu.aspx");
+        }
+
+        protected void btnSave_Click(object sender, EventArgs e)
+        {
+            SqlConnection con = new SqlConnection("Data Source=.;Initial Catalog=Training;User ID=training;Pwd=training;");
+            SqlCommand cmd = new SqlCommand(@"INSERT INTO [dbo].[logHoursPage] ([EmployeeID]           ,[Hours]          ,[Date], [Description])     VALUES           ('" + txtEmpID.Text + "','" + txtHours.Text + "','" + txtDate.Text + "', '" + txtDescription.Text + "')", con);
+            con.Open();
+            cmd.ExecuteNonQuery();
+            Response.Write("Data saved successfully");
+            con.Close();
+        }
+
+        protected void btnUpdate_Click(object sender, EventArgs e)
+        {
+            SqlConnection con = new SqlConnection("Data Source=.;Initial Catalog=Training;User ID=training;Pwd=training;");
+            SqlCommand cmd = new SqlCommand(@"UPDATE [dbo].[logHoursPage]   SET [EmployeeID] = '" + txtEmpID.Text + "'      ,[Hours] = '" + txtHours.Text + "'     ,[Date] = '" + txtDate.Text + "',[Description] = '" + txtDescription.Text + "' WHERE [EmployeeID]='" + txtEmpID.Text + "'", con);
+            con.Open();
+            cmd.ExecuteNonQuery();
+            Response.Write("Data updated successfully");
+            con.Close();
+        }
+
+        protected void btnDelete_Click(object sender, EventArgs e)
+        {
+            SqlConnection con = new SqlConnection("Data Source=.;Initial Catalog=Training;User ID=training;Pwd=training;");
+            SqlCommand cmd = new SqlCommand(@"DELETE FROM [dbo].[logHoursPage]      WHERE [EmployeeID]='" + txtEmpID.Text + "'", con);
+            con.Open();
+            cmd.ExecuteNonQuery();
+            Response.Write("Deleted successfully");
+            con.Close();
+        }
+
+        //add entry button connect to database workHours
+        protected void AddHours_Click(object sender, EventArgs e)
+        {
+            Response.Redirect("EditLogHours.aspx");
+        }
+
+        protected void goButt_Click(object sender, EventArgs e)
+        {
+
+            
+
+            BindDataGrid();
+        }
+
+        private void BindDataGrid()
+        {
+            DateTime dFromDate;
+
+            DateTime.TryParse(fromDate.Text, out dFromDate);
+
+            if (dFromDate == DateTime.MinValue)
+            {
+                Response.Write("Invalid From Date");
+                return;
+            }
+
+            DateTime dToDate;
+
+            DateTime.TryParse(toDate.Text, out dToDate);
+
+            if (dToDate == DateTime.MinValue)
+            {
+                Response.Write("Invalid To Date");
+                return;
+            }
+            //do same thing from pageload but with filters
+            SqlConnection con = new SqlConnection("Data Source=.;Initial Catalog=Training;User ID=training;Pwd=training;");
+            SqlCommand cmd;
+            //edit insert query below
+
+
+            if (DropDownList2.SelectedValue == "0")
+                cmd = new SqlCommand("select Id, EmployeeID, name, convert(varchar(10),logDate,101) as logDate, logDescription,logHours from workHours where logdate between '" + dFromDate.ToString("MM-dd-yyyy") + "' and '" + dToDate.ToString("MM-dd-yyyy") + "'", con);
+            else
+                cmd = new SqlCommand("select Id, EmployeeID, name, convert(varchar(10),logDate,101) as logDate, logDescription,logHours from workHours where logdate between '" + dFromDate.ToString("MM - dd - yyyy") + "' and '" + dToDate.ToString("MM-dd-yyyy") + "' and employeeid = " + DropDownList2.SelectedValue, con);
+            con.Open();
+
+            SqlDataAdapter sda = new SqlDataAdapter(cmd);
+            DataTable dt = new DataTable();
+            sda.Fill(dt);
+            dglogHoursPage.DataSource = dt;
+            dglogHoursPage.DataBind();
+
+            if(dt.Rows.Count == 0)
+            {
+                Response.Write("No record found");
+            }
+             
+        }
+        //for exporting to excel
+        protected void LinkButton1_Click(object sender, EventArgs e)
+        {
+            Response.Clear();
+            Response.Buffer = true;
+            Response.ContentType= "application/ms-excel";
+            Response.AddHeader("content-disposition","attachment; filename=UserInfo.xls");
+            Response.Charset = "";
+            StringWriter sw = new StringWriter();
+            HtmlTextWriter htw = new HtmlTextWriter(sw);
+            dglogHoursPage.RenderControl(htw);
+            Response.Output.Write(sw.ToString());
+            Response.End();
+        }
+        //keep this because it gets rid of error
+        public override void VerifyRenderingInServerForm(Control control)
+        {
+            
+        }
+
+
+    }
+}
