@@ -1,0 +1,51 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+using System.Data;
+using System.Data.SqlClient;
+using System.Web.Configuration;
+
+namespace TrainingAppNew
+{
+    public partial class Login : System.Web.UI.Page
+    {
+        protected void Page_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        protected void Button1_Click(object sender, EventArgs e)
+        {
+            
+            try
+            {
+                string constr = WebConfigurationManager.ConnectionStrings["dbconnection"].ConnectionString;
+                SqlConnection con = new SqlConnection(constr);
+
+                con.Open();
+                SqlCommand cmd = new SqlCommand("select ID,name,role from idus where username='" + txtuser.Text + "' and password = '" + txtpass.Text + "'", con);
+                SqlDataAdapter sda = new SqlDataAdapter(cmd);
+                DataTable dt = new DataTable();
+                sda.Fill(dt);
+                
+                if (dt.Rows.Count > 0)
+                {
+                    Session["UserId"] = dt.Rows[0]["ID"].ToString();
+                    Session["UserName"] = dt.Rows[0]["name"].ToString();
+                    Session["UserRole"] = dt.Rows[0]["role"].ToString();
+                    Response.Redirect("Menu.aspx");
+                }
+                else
+                {
+                    Response.Write("<script>alert('error in login')</script");
+                }
+            }catch (Exception ex)
+            {
+                Response.Write(ex.Message);
+            }
+        }
+    }
+}
