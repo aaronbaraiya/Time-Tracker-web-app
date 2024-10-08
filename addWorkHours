@@ -1,0 +1,53 @@
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
+using System.Linq;
+using System.Web;
+using System.Web.Configuration;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+
+namespace TrainingAppNew
+{
+    public partial class AddWorkHoursReport : System.Web.UI.Page
+    {
+        protected void Page_Load(object sender, EventArgs e)
+        {
+            if (!IsPostBack)
+            {
+                //only in edit mode
+                if (Request.QueryString["id"] != null && Request.QueryString["id"] != "")
+                {
+                    btnUpdate.Text = "Update";
+                    btnDelete.Visible = true;
+                    title.InnerHtml = "<h1>edit employee</h1>";
+
+                    string id = Request.QueryString["id"];
+                    string constr = WebConfigurationManager.ConnectionStrings["dbconnection"].ConnectionString;
+                    SqlConnection con = new SqlConnection(constr);
+
+                    con.Open();
+                    SqlCommand cmd = new SqlCommand("select * from idus where id =" + id, con);
+                    SqlDataAdapter sda = new SqlDataAdapter(cmd);
+                    DataTable dt = new DataTable();
+
+                    //fills name to table when click edit, ask about above code needed to fill as well
+                    sda.Fill(dt);
+                    txtEmpID.Text = dt.Rows[0]["Employee Id"].ToString();
+                    txtToDate.Text = dt.Rows[0]["To Date"].ToString();
+                    txtFromDate.Text = dt.Rows[0]["From Date"].ToString();
+                    txtDescriptionTwo.Text = dt.Rows[0]["Description"].ToString();
+                   
+
+                }
+                else
+                {
+                    btnUpdate.Text = "Insert";
+                    btnDelete.Visible = false;
+                    title.InnerHtml = "<h1>Add Employee</h1>";
+                }
+            }
+        }
+    }
+}
