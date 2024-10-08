@@ -1,0 +1,258 @@
+using System;
+using System.Collections.Generic;
+using System.Configuration;
+using System.Data;
+using System.Data.SqlClient;
+using System.Linq;
+using System.Web;
+using System.Web.Configuration;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+
+namespace TrainingAppNew
+{
+    public partial class EditLogHours : System.Web.UI.Page
+    {
+        protected void Page_Load(object sender, EventArgs e)
+        {
+
+            if (Session["UserId"] == null)
+                Response.Redirect("Login.aspx");
+
+
+            //start of trying to connect to data to dropDownList
+            if (!IsPostBack)
+            {
+
+                Calendar1.Visible = false;
+
+                string cs = ConfigurationManager.ConnectionStrings["dbconnection"].ConnectionString;
+                using (SqlConnection conn = new SqlConnection(cs))
+                {
+                    if (Session["UserRole"].ToString().ToLower() == "employee") //to make it that in the drop down selection only the employee name gets put
+                    {
+
+
+                        SqlCommand cmd = new SqlCommand("Select ID,name from idus where id = " + Session["UserId"].ToString(), conn); //to make it that in the drop down selection only the employee name gets put
+                        SqlDataAdapter sda = new SqlDataAdapter(cmd);
+                        DataTable dt = new DataTable();
+                        sda.Fill(dt);
+                        conn.Open();
+                        DropDownList1.DataSource = dt;
+                        DropDownList1.DataTextField = "Name";
+                        DropDownList1.DataValueField = "ID";
+                        ListItem li = new ListItem();
+                        //li.Text = "--Select--";
+                        li.Value = "0";
+
+
+
+
+                        DropDownList1.Items.Add(li);
+
+                        DropDownList1.DataBind();
+                        //DropDownList1.Items.Insert(0, new ListItem("--select--", "0"));
+
+
+                    }
+                    else //else condition is here so that the dropdown populates with other employee names as well
+                    {
+                        SqlCommand cmd3 = new SqlCommand("Select ID,name from idus", conn);
+                        SqlDataAdapter sda3 = new SqlDataAdapter(cmd3);
+                        DataTable dt3 = new DataTable();
+                        sda3.Fill(dt3);
+                        conn.Open();
+                        DropDownList1.DataSource = dt3;
+                        DropDownList1.DataTextField = "Name";
+                        DropDownList1.DataValueField = "ID";
+                        ListItem li = new ListItem();
+                        li.Text = "--Select All--";
+                        li.Value = "0";
+
+                        DropDownList1.Items.Add(li);
+
+                        DropDownList1.DataBind();
+                        DropDownList1.Items.Insert(0, new ListItem("--select all--", "0"));
+                        //end of connecting dropdown
+                    }
+
+
+
+
+
+
+
+                }
+
+                if (Request.QueryString["Id"] != null && Request.QueryString["Id"] != "" /*&& Request.QueryString["Date"] != null && Request.QueryString["Date"] != ""*/)
+                {
+                    btnUpdate2.Text = "Update";
+                    btnDelete2.Visible = true;
+                    title.InnerHtml = "<h1>edit hours</h1>";
+
+                    string id = Request.QueryString["Id"];
+                    
+                    string constr2 = WebConfigurationManager.ConnectionStrings["dbconnection"].ConnectionString;
+                    SqlConnection con = new SqlConnection(constr2);
+
+                    con.Open();
+                    SqlCommand cmd = new SqlCommand("select * from workHours where id =" + id , con);
+                    SqlDataAdapter sda = new SqlDataAdapter(cmd);
+                    DataTable dt = new DataTable();
+
+                    /*string Date = Request.QueryString["Date"];
+                    string constr2 = WebConfigurationManager.ConnectionStrings["dbconnection"].ConnectionString;
+                    SqlConnection con2 = new SqlConnection(constr);*/
+
+                    /*con.Open();
+                    SqlCommand cmd2 = new SqlCommand("select * from idus where date =" + date, con);
+                    SqlDataAdapter sda2 = new SqlDataAdapter(cmd);
+                    DataTable dt2 = new DataTable();*/
+
+                    //fills name to table when click edit, ask about above code needed to fill as well
+                    sda.Fill(dt);
+                    //line 61 is giving error when clicking edit or add entry
+                    DropDownList1.SelectedValue = dt.Rows[0]["EmployeeId"].ToString();//get name.Text from .aspx ID line 66
+                    txtHours.Text = dt.Rows[0]["logHours"].ToString();
+                    txtDate.Text = Convert.ToDateTime(dt.Rows[0]["logDate"].ToString()).ToString("MM-dd-yyyy");
+                    txtDescription.Text = dt.Rows[0]["logDescription"].ToString();
+                    /*
+                    sda2.Fill(dt2);
+                    txtEmpID.Text = dt2.Rows[0]["Employee Id"].ToString();
+                    txtHours.Text = dt2.Rows[0]["Hours"].ToString();
+                    txtDate.Text = dt2.Rows[0]["Date"].ToString();
+                    txtDescription.Text = dt2.Rows[0]["Description"].ToString();*/
+
+
+                }
+                else
+                {
+                    btnUpdate2.Text = "Insert";
+                    btnDelete2.Visible = false;
+                    title.InnerHtml = "<h1>Add hours</h1>";
+                }
+            }
+            
+        }
+
+        protected void ImageButton1_Click(object sender, ImageClickEventArgs e)
+        {
+            if (Calendar1.Visible)
+            {
+                Calendar1.Visible = false;
+            }
+            else
+            {
+                Calendar1.Visible = true;
+            }
+            Calendar1.Attributes.Add("style","position:absolute");
+        }
+
+        protected void Calendar1_SelectionChanged(object sender, EventArgs e)
+        {
+           txtDate.Text = Calendar1.SelectedDate.ToString("MM-dd-yyyy");
+           Calendar1.Visible=false;
+        }
+
+        protected void Calendar1_DayRender(object sender, DayRenderEventArgs e)
+        {
+            if (e.Day.IsOtherMonth)
+            {
+                e.Day.IsSelectable = false;
+                e.Cell.BackColor = System.Drawing.Color.Aquamarine;
+            }
+        }
+       
+
+        protected void RetToLogHours_Click(object sender, EventArgs e)
+        {
+            Response.Redirect("LogHours.aspx");
+        }
+
+        //instead of redirect, it should update in the database
+        protected void btnUpdate_Click(object sender, EventArgs e)
+        {
+
+            //all this is for empty textboxes which must be filled out
+            if (string.IsNullOrEmpty(txtHours.Text))
+            {
+                Response.Write("Enter employee hours");
+                txtHours.Focus();
+                return;
+            }
+            if (string.IsNullOrEmpty(txtDate.Text))
+            {
+                Response.Write("Enter date");
+                txtDate.Focus();
+                return;
+            }
+            if (string.IsNullOrEmpty(txtDescription.Text))
+            {
+                Response.Write("Enter description");
+                txtDescription.Focus();
+                return;
+            }
+
+            //add the if else for selection
+            if (DropDownList1.SelectedValue == "0")
+            {
+                Response.Write("Must choose employee name");
+                return;
+            }
+            
+
+
+
+
+            DateTime dLogDate;
+
+            DateTime.TryParse(txtDate.Text, out dLogDate);
+
+            if (dLogDate == DateTime.MinValue)
+            {
+                Response.Write("Invalid Log Date");
+                return;
+            }
+
+            if (Request.QueryString["Id"] != null && Request.QueryString["Id"] != "" /*&& Request.QueryString["Date"] != null && Request.QueryString["Date"] != ""*/)
+            {
+                string id = Request.QueryString["Id"];
+                SqlConnection con = new SqlConnection("Data Source=.;Initial Catalog=Training;User ID=training;Pwd=training;");
+                SqlCommand cmd = new SqlCommand(@"UPDATE [dbo].[workHours]   SET [EmployeeID] = '" + DropDownList1.SelectedValue + "'      ,[logHours] = '" + txtHours.Text + "'     ,[logDate] = '" + txtDate.Text + "',[logDescription] = '" + txtDescription.Text + "' WHERE [Id]='" + id + "'", con);
+                con.Open();
+                cmd.ExecuteNonQuery();
+                Response.Write("Data updated successfully");
+                con.Close();
+            }
+            else
+            {
+                SqlConnection con = new SqlConnection("Data Source=.;Initial Catalog=Training;User ID=training;Pwd=training;");
+                SqlCommand cmd = new SqlCommand(@"INSERT INTO [dbo].[workHours]   (EmployeeID,logHours,logDate,logDescription,Name) VALUES ('" + DropDownList1.SelectedValue + "','" + txtHours.Text + "'     , '" + txtDate.Text + "', '" + txtDescription.Text + "', '"+DropDownList1.SelectedItem.Text+"') ", con);
+                con.Open();
+                cmd.ExecuteNonQuery();
+                Response.Write("Data updated successfully");
+                con.Close();
+            }
+            /*
+            //checking if textboxes has been filled
+            //checking if textboxes has been filled
+            if (txtHours.Text.Trim().Length == 0 || txtDate.Text.Trim().Length == 0 || txtDescription.Text.Trim().Length == 0)
+            {
+                Response.Write("INPUT REQUIRED");
+            }*/
+
+
+        }
+
+        //instead of redirect, it should delete in the database
+        protected void btnDelete_Click(object sender, EventArgs e)
+        {
+            SqlConnection con = new SqlConnection("Data Source=.;Initial Catalog=Training;User ID=training;Pwd=training;");
+            SqlCommand cmd = new SqlCommand(@"DELETE FROM [dbo].[workHours]      WHERE [EmployeeID]='" + DropDownList1.Text + "'", con);
+            con.Open();
+            cmd.ExecuteNonQuery();
+            Response.Write("Deleted successfully");
+            con.Close();
+        }
+    }
+}
