@@ -1,0 +1,92 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+using System.Data;
+using System.Data.SqlClient;
+using System.Web.Configuration;
+
+namespace TrainingAppNew
+{
+    public partial class ListofEmployees : System.Web.UI.Page
+    {
+        protected void Page_Load(object sender, EventArgs e)
+        {
+
+            if (Session["UserId"] == null)
+                Response.Redirect("Login.aspx");
+
+
+
+            //to allow data to be seen on webpage
+            if (!IsPostBack)
+            {
+                
+                string constr = WebConfigurationManager.ConnectionStrings["dbconnection"].ConnectionString;
+                SqlConnection con = new SqlConnection(constr);
+
+                if (Session["UserRole"].ToString().ToLower() == "admin" || Session["UserRole"].ToString().ToLower() == "manager") //so only admin or manager can have access to list of employees
+                
+                {
+                    con.Open();
+                    SqlCommand cmd = new SqlCommand("select * from idus", con);
+                    SqlDataAdapter sda = new SqlDataAdapter(cmd);
+                    DataTable dt = new DataTable();
+                    sda.Fill(dt);
+                    dgEmployees.DataSource = dt;
+                    dgEmployees.DataBind();
+
+                    dvEmployees.DataSource = dt;
+                    dvEmployees.DataBind();//getting error
+                }
+            }
+        }
+
+        protected void Back_Click(object sender, EventArgs e)
+        {
+            Response.Redirect("Menu.aspx");
+        }
+
+        protected void btnInsert_Click(object sender, EventArgs e)
+        {
+            SqlConnection con = new SqlConnection("Data Source=.;Initial Catalog=Training;User ID=training;Pwd=training;");
+            SqlCommand cmd = new SqlCommand(@"INSERT INTO [dbo].[idus] ([ID] ,[name] ,[phone],[address]) VALUES ('" + txtID.Text + "','" + txtName.Text + "','" + txtPhone.Text + "','" + txtAdd.Text + "')", con);
+            con.Open();
+            cmd.ExecuteNonQuery();
+            Response.Write("Data inserted successfully");
+            con.Close();
+        }
+
+        protected void btnDelete_Click(object sender, EventArgs e)
+        {
+            SqlConnection con = new SqlConnection("Data Source=.;Initial Catalog=Training;User ID=training;Pwd=training;");
+            SqlCommand cmd = new SqlCommand(@"DELETE FROM [dbo].[idus]   WHERE [ID]='" + txtID.Text + "'", con);
+            con.Open();
+            cmd.ExecuteNonQuery();
+            Response.Write("Deleted successfully");
+            con.Close();
+        }
+
+        protected void btnUpdate_Click(object sender, EventArgs e)
+        {
+            SqlConnection con = new SqlConnection("Data Source=.;Initial Catalog=Training;User ID=training;Pwd=training;");
+            SqlCommand cmd = new SqlCommand(@"UPDATE [dbo].[idus] SET [ID] = '" + txtID.Text + "',[name] = '" + txtName.Text + "',[phone] = '" + txtPhone.Text + "',[address] = '" + txtAdd.Text + "' WHERE [ID]='" + txtID.Text + "'", con);
+            con.Open();
+            cmd.ExecuteNonQuery();
+            Response.Write("Updated successfully");
+            con.Close();
+        }
+
+        protected void addEmployee_Click(object sender, EventArgs e)
+        {
+            Response.Redirect("addEmployee.aspx");
+        }
+
+        protected void BacktoList_Click(object sender, EventArgs e)
+        {
+            Response.Redirect("ListOfEmployees.aspx"); //goes back to list of employees
+        }
+    }
+}
