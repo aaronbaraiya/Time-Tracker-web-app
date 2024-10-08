@@ -1,0 +1,198 @@
+using System;
+using System.Collections.Generic;
+using System.Data.SqlClient;
+using System.Data;
+using System.Linq;
+using System.Web;
+using System.Web.Configuration;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+using System.Data;
+using System.Data.SqlClient;
+using System.Web.Configuration;
+using System.Web.Services.Description;
+using System.Configuration;
+
+namespace TrainingAppNew
+{
+    public partial class addEmployee : System.Web.UI.Page
+    {
+        protected void Page_Load(object sender, EventArgs e)
+        {
+            txtPasswordEmp.Attributes["type"] = "password";
+
+            
+
+            if (!IsPostBack)
+            {
+                //
+                //execute below statements only in edit mode.
+                //request.querystring request if ID is there, if there is ID then it goes to edit page, if not then add page
+                if (Request.QueryString["id"] != null && Request.QueryString["id"] != "")
+                {
+                    //renames the buttons and stuff if there is a id
+                    btnUpdateEmp.Text = "Update";
+                    btnDeleteEmp.Visible = true;
+                    title.InnerHtml = "<h1>edit employee</h1>";
+
+
+                    string id = Request.QueryString["id"];
+                    string constr = WebConfigurationManager.ConnectionStrings["dbconnection"].ConnectionString;
+                    SqlConnection con = new SqlConnection(constr);
+
+                    con.Open();
+                    SqlCommand cmd = new SqlCommand("select * from idus where id =" + id, con);
+                    SqlDataAdapter sda = new SqlDataAdapter(cmd);
+                    DataTable dt = new DataTable();
+
+                    //fills name to table when click edit, ask about above code needed to fill as well
+                    //prefills if edit
+                    sda.Fill(dt);
+                    txtNameEmp.Text = dt.Rows[0]["name"].ToString();
+                    txtIDEmp.Text = dt.Rows[0]["ID"].ToString();
+                    txtPhoneEmp.Text = dt.Rows[0]["Phone"].ToString();
+                    txtAddEmp.Text = dt.Rows[0]["Address"].ToString();
+                    txtUsernameEmp.Text = dt.Rows[0]["Username"].ToString();
+                    txtPasswordEmp.Text = dt.Rows[0]["Password"].ToString();
+                    //prefill drop down here
+                    RoleDropDown.Text = dt.Rows[0]["Role"].ToString();
+                    //this.RoleDropDown.Items.Insert(0, "Please select");
+                }
+                //New employee mode
+                //if no id is found in the url in the request.query string
+                else
+                {
+                    btnUpdateEmp.Text = "Insert";
+                    btnDeleteEmp.Visible = false;
+                    title.InnerHtml = "<h1>Add Employee</h1>";
+                }
+
+            }
+        }
+
+        
+
+        protected void btnDelete_Click(object sender, EventArgs e)
+        {
+            SqlConnection con = new SqlConnection("Data Source=.;Initial Catalog=Training;User ID=training;Pwd=training;");
+            SqlCommand cmd = new SqlCommand(@"DELETE FROM [dbo].[idus]      WHERE [ID]='"+txtIDEmp.Text+"'",con);
+            con.Open();
+            cmd.ExecuteNonQuery();
+            Response.Write("Deleted successfully");
+            con.Close();
+        }
+
+        protected void btnUpdate_Click(object sender, EventArgs e)
+        {
+
+            //all this is for when clicking update and the textboxes are empty
+            if (string.IsNullOrEmpty(txtIDEmp.Text))
+            {
+                Response.Write("Enter employee id");
+                txtIDEmp.Focus();
+                return;
+            }
+            if (string.IsNullOrEmpty(txtNameEmp.Text))
+            {
+                Response.Write("Enter employee name");
+                txtNameEmp.Focus();
+                return;
+            }
+            if (string.IsNullOrEmpty(txtUsernameEmp.Text))
+            {
+                Response.Write("Enter username");
+                txtUsernameEmp.Focus();
+                return;
+            }
+            if (string.IsNullOrEmpty(txtPasswordEmp.Text))
+            {
+                Response.Write("Enter password");
+                txtPasswordEmp.Focus();
+                return;
+            }
+            if (string.IsNullOrEmpty(txtPhoneEmp.Text))//phone
+            {
+                Response.Write("Enter phone number");
+                txtPhoneEmp.Focus();
+                return;
+            }
+            if (string.IsNullOrEmpty(txtAddEmp.Text))//address
+            {
+                Response.Write("Enter address");
+                txtAddEmp.Focus();
+                return;
+            }
+            if (string.IsNullOrEmpty(RoleDropDown.Text))
+            {
+                Response.Write("Enter dropdown");
+                RoleDropDown.Focus();
+                return;
+            }
+
+            //add the if else for selection
+            if (RoleDropDown.SelectedValue == "0")
+            {
+                Response.Write("Must choose employee role");
+                return;
+            }
+
+            
+
+            try
+            {
+                //execute below statements only in edit mode.
+                if (Request.QueryString["id"] != null && Request.QueryString["id"] != "")
+                {
+                    SqlConnection con = new SqlConnection("Data Source=.;Initial Catalog=Training;User ID=training;Pwd=training;");
+             /*update password,username,role*/SqlCommand cmd = new SqlCommand(@"UPDATE [dbo].[idus]   SET [id] = '" + txtIDEmp.Text + "'      ,[name] = '" + txtNameEmp.Text + "'      ,[phone] = '" + txtPhoneEmp.Text + "'      ,[username] = '"+txtUsernameEmp.Text+"', [password] = '"+txtPasswordEmp.Text+"', [address] = '" + txtAddEmp.Text + "', [role] = '"+RoleDropDown.Text+"' WHERE [ID]='"+txtIDEmp.Text+"'", con);
+                    con.Open();
+                    cmd.ExecuteNonQuery();//giving error when clicking update/insert for adding employee or editing employee profile
+                    Response.Write("Updated successfully");
+                    con.Close();
+                }
+                // new mode
+                else
+                {
+                    SqlConnection con = new SqlConnection("Data Source=.;Initial Catalog=Training;User ID=training;Pwd=training;");
+                    SqlCommand cmd = new SqlCommand(@"INSERT INTO [dbo].[idus] (id,name,phone,address,username,password,role) values( '" + txtIDEmp.Text + "'      ,'" + txtNameEmp.Text + "'      ,'" + txtPhoneEmp.Text + "'      ,'" + txtAddEmp.Text + "','"+txtUsernameEmp.Text+"','"+txtPasswordEmp.Text+"', '"+RoleDropDown.Text+"')", con);
+                    con.Open();
+                    cmd.ExecuteNonQuery();//giving error when clicking update/insert for adding employee or editing employee profile
+                    Response.Write("Created successfully");
+                    con.Close();
+                }
+            }
+            catch(Exception ex)
+            {
+                Response.Write(ex.Message);
+            }
+            /*
+            //checking if textboxes has been filled
+            //checking if textboxes has been filled
+            if (txtIDEmp.Text.Trim().Length == 0 || txtNameEmp.Text.Trim().Length == 0 || txtUsernameEmp.Text.Trim().Length == 0 || txtPasswordEmp.Text.Trim().Length == 0 || RoleDropDown.Text.Trim().Length == 0)
+            {
+                Response.Write("INPUT REQUIRED");
+            }*/
+            
+            
+        }
+
+        //to make the input only numbers but the KeyPressEventArgs wont work for some reason
+        /*private void txtPhoneEmp_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (e.Handled = !char.IsDigit(e.KeyChar))
+            {
+                Response.Write("Only numberic values allowed");
+            }
+        }*/
+
+        protected void Back_Click(object sender, EventArgs e)
+        {
+            Response.Redirect("Menu.aspx");
+        }
+
+        protected void BackToList_Click(object sender, EventArgs e)
+        {
+            Response.Redirect("ListOfEmployees.aspx");
+        }
+    }
+}
